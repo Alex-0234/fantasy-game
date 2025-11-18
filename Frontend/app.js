@@ -1,54 +1,62 @@
 import { RemoveHeaderWrapper, AppendHeaderWrapper, createElement } from './DOMCreation.js'
 
-
-
 document.addEventListener('DOMContentLoaded', async () => {
+    //localStorage.removeItem('token');
     const events = new Emitter();
+    const UI = new UIManager(events);
     const User = new Auth(events);
     const Manager = new CharacterManager(events);
 
+
     events.on('user:change', (payload) => {
         const { t, p, v } = payload;
+        if (v === null) return;
+
         if (p === 'username') {
             Manager.loadUser(v);
         }
         console.log(payload);
         
     })
-
+    events.on('user:register', (payload) => {
+        
+    })
+    events.on('user:login', (payload) => {
+        const {userId, username, token} = payload;
+        User.data.userId = userId;
+        User.data.username = username;
+        User.data.token = token;
+        localStorage.setItem('token', token);
+        this.events.emit('user:login:success');
+    })
+    events.on('user:logout', () => {
+        User.data.userId = null;
+        User.data.username = null;
+        User.data.token = null;
+        localStorage.removeItem('token');
+        this.events.emit('user:logout:success');
+    })
     
 
-    //User.data.username = 'Alex';
-    
-   
-
+    await User.init();
 
 
     //        [   DOM Elements   ]       //
     const registerButton = document.getElementById('register-button');
     const loginButton = document.getElementById('login-button');
     const signupWindow = document.getElementById('login-register-form');
-    //const classSelect = document.getElementById('class-select');
-
-
-    //        [ Event Listeners ]       //
-
-   /*  classSelect.addEventListener('wheel', (e) => {
-        e.preventDefault(); // stop page from vertical scroll
-        classSelect.scrollLeft += e.deltaY * 10; // use vertical wheel delta to move sideways
-    }); */
 
     loginButton.addEventListener('click', async (e) => {
         e.preventDefault();
         const usernameValue = document.getElementById('username').value;
         const passwordValue = document.getElementById('password').value;
-        watchedUser.login(usernameValue, passwordValue);
+        User.login(usernameValue, passwordValue);
     })
     registerButton.addEventListener('click', async (e) => {
         e.preventDefault();
         const usernameValue = document.getElementById('username').value;
         const passwordValue = document.getElementById('password').value;
-        watchedUser.register(usernameValue, passwordValue);
+        User.register(usernameValue, passwordValue);
     });
 
 })
@@ -66,12 +74,16 @@ class Emitter {
         }
         this.listeners[event].push(callback);
     }
-    emit(event, ...args) {
-        this.listeners[event].forEach(cb => {
-            cb(...args);
-        });
+    emit(event, payload) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(cb => {
+                cb(payload);
+            })
+        } 
     }
 }
+
+
 class Auth {
     constructor(events) {
         this.events = events;
@@ -93,12 +105,12 @@ class Auth {
                 body: JSON.stringify({ token })
             });
             const data = await response.json();
-            this.user = data.username;
-            //console.log(data.username)
-            this.token = data.token;
-            //console.log(data.token)
-            localStorage.setItem('token', token);
-            
+            console.log(data);
+            data.token = token;
+            if (data !== undefined) {
+                this.events.emit('user:login', data);
+                localStorage.setItem('token', token);
+            }
         }
         else {
             console.log('No Tokens found');
@@ -128,27 +140,34 @@ class Auth {
             body: JSON.stringify({ username, password, token })
          });
         const data = await response.json();
+
+        this.events.emit('user:login', data);
         console.log('Login response:', data.message);
-        this.user = data.username;
-        this.token = data.token;
-        //console.log('USER:',this.user);
-        localStorage.setItem('token', data.token);
 
         RemoveHeaderWrapper();
         document.querySelector('#login-register-form').remove()
         
     }
     logout() {
-        this.user = null;
-        this.token = null;
-        localStorage.removeItem('token');
+        this.events.emit('user:logout');
         console.log('User logged-out')
     }
     print() {
         console.log(this.user);
     }
 }
+class UIManager {
+    constructor(events) {
+        this.events = events;
 
+        events.on('UI:open:window', (windowName) => {
+            this.handleWindowOpen(windowName);
+        })
+        events.on('user:login:success', () => {
+            this.closeAllWindows();
+        })
+    }
+}
 
 
 class CharacterManager {
