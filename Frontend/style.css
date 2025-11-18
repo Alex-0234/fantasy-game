@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+:root {
+    --primary-color: #491475;
+    --secondary-color: #1d1c22;
+    --background-color: #242424;
+    --text-color: #212121;
+    --font: "Poppins", sans-serif;
+    --font-size-small: 12px;
+    --font-size-medium: 16px;
+    --font-size-large: 32px;
+}
+body {
+    margin: 0;
+    
+}
+main {
+    height: calc(100vh - 8vh);
+    width: 100vw;
+    font-family: var(--font);
+    display: flex;
+    background: rgb(31, 31, 31);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+header {
+    height: 8vh;
+    width: 100vw;
+    background: var(--secondary-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font);
+}
+#heading {
+    margin-left: 1rem;
+    text-align: center;
+    line-height: 8vh;
+    font-size: var(--font-size-large);
+    
+}
+.no-margin {
+    margin: 0;
+}
+#login-register-form {
+    position: absolute;
+    top: 25%;
+    left: 30%;
+    height: 50%;
+    width: 40%;
+    background: var(--secondary-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.hidden {
+    visibility: hidden;
+}
+
+.wrapper {
+    height: 100%;
+    width: auto;
+    display: flex;
+    align-items: center;
+}
+.header-button {
+    height: 50%;
+    width: 8rem;
+    margin-right: 1rem;
+    border: none;
+    border-radius: 0.4rem;
+}
+.header-button:hover {
+    transform: scale(0.98);
+    background: lightgrey;
+}
+#character-select {
+    height: 50%;
+    width: 80%;
+    background: var(--primary-color);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+#class-select {
+    display: flex;
+    scroll-behavior: smooth;
+    height: 100%;
+    width: calc(30% * 6);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+}
+.classes {
+    flex: 0 0 auto;
+    height: 90%;
+    width: 15rem;
+    margin: 2rem;
+    background: rgba(0,0,0,0.2);
+}
+
