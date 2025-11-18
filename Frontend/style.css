@@ -42,7 +42,7 @@ header {
 .no-margin {
     margin: 0;
 }
-#login-register-form {
+.user-form {
     position: absolute;
     top: 25%;
     left: 30%;
