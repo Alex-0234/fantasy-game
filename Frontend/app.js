@@ -1,47 +1,24 @@
-import { RemoveHeaderWrapper, AppendHeaderWrapper, createElement, loginWindow, registerWindow} from './DOMCreation.js'
+import { RemoveSignupWrapper, AppendSignupWrapper, appendUserWrapper, loginWindow, registerWindow} from './DOMCreation.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
-    localStorage.removeItem('token');
+    //localStorage.removeItem('token');
     const events = new Emitter();
     const UI = new UIManager(events);
     const Manager = new CharacterManager(events);
     const User = new Auth(events);
 
-
+    await User.init();
 
     
 
-    await User.init();
 
 
     //        [   DOM Elements   ]       //
     
-    const registerButton = document.getElementById('register-button');
-    const loginButton = document.getElementById('login-button');
-    const signupWindow = document.getElementById('login-register-form');
 
-    loginButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const usernameValue = document.getElementById('username').value;
-        const passwordValue = document.getElementById('password').value;
-        User.login(usernameValue, passwordValue);
-    })
-    registerButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const usernameValue = document.getElementById('username').value;
-        const passwordValue = document.getElementById('password').value;
-        User.register(usernameValue, passwordValue);
-    });
 
-    events.on('user:change', (payload) => {
-        const { t, p, v } = payload;
-        if (v === null) return;
 
-        if (p === 'username') {
-            Manager.loadUser(v);
-        }
-        console.log(payload);
-    })
+
 })
 
 
@@ -79,47 +56,58 @@ class Auth {
             }
         })
 
+        this.events.on('user:register:attempt', (payload) => {
+            const { username, password } = payload;
+            this.register(username, password);
+        })
+        this.events.on('user:login:attempt', (payload) => {
+            const { username, password } = payload;
+            this.login(username, password);
+        })
         
         this.events.on('user:register', (payload) => {
             
         })
         this.events.on('user:login', (payload) => {
             const {userId, username, token} = payload;
-            User.data.userId = userId;
-            User.data.username = username;
-            User.data.token = token;
+            this.data.userId = userId;
+            this.data.username = username;
+            this.data.token = token;
             localStorage.setItem('token', token);
-            events.emit('user:login:success');
+            events.emit('user:login:success', this.data.username);
         })
         this.events.on('user:logout', () => {
-            User.data.userId = null;
-            User.data.username = null;
-            User.data.token = null;
+            this.data.userId = null;
+            this.data.username = null;
+            this.data.token = null;
             localStorage.removeItem('token');
             events.emit('user:logout:success');
         })
     }
     async init() {
-        if (localStorage.getItem('token') !== null) {
-            const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token');
+        if (token === null) {
+            console.log('No Tokens found');
+            this.events.emit('UI:render:buttons'); 
+            return;
+        }
+        try {
             const response = await fetch ('http://127.0.0.1:3000/tokenDecrypt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token })
             });
-            const data = await response.json();
-            console.log(data);
-            data.token = token;
-            if (data !== undefined) {
+            if(response.ok) {
+                const data = await response.json(); 
                 this.events.emit('user:login', data);
-                localStorage.setItem('token', token);
+            }
+            else {
+                localStorage.removeItem('token')
             }
         }
-        else {
-            console.log('No Tokens found');
-            this.events.emit('UI:render:buttons');
+        catch (error) {
 
-        }
+        }  
     }
     async register(username, password) {
          const response = await fetch('http://127.0.0.1:3000/register', {
@@ -146,9 +134,6 @@ class Auth {
 
         this.events.emit('user:login', data);
         console.log('Login response:', data.message);
-
-        document.querySelector('#login-register-form').remove()
-        
     }
     logout() {
         this.events.emit('user:logout');
@@ -161,24 +146,60 @@ class Auth {
 class UIManager {
     constructor(events) {
         this.events = events;
+        this.activeWindow = null;
 
-        events.on('UI:render:buttons', () => {
+        this.setupEvents();
+    }
+    setupEvents() {
+        this.events.on('UI:render:buttons', () => {
             const header = document.getElementById('header');
-            AppendHeaderWrapper(this.events, header);
+            AppendSignupWrapper(this.events, header);
         })
-        events.on('UI:open:window', (windowName) => {
+        this.events.on('UI:open:window', (windowName) => {
             const header = document.getElementById('header');
             if ( windowName === 'login' ) {
-                loginWindow(header);
+                const {form, label1, label2, username, password, button} = loginWindow();
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    const userVal = username.value;
+                    const passVal = password.value;
+                    this.events.emit('user:login:attempt', {username: userVal, password: passVal})
+                })
+                label1.appendChild(username);
+                label2.appendChild(password);
+                form.append(label1, label2, button);
+                this.activeWindow && this.activeWindow.remove();
+                this.activeWindow = form;
+                document.body.appendChild(form);
             }
             if ( windowName === 'register' ) {
-                registerWindow(header);
+                const {form, label1, label2, username, password, button} = registerWindow();
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    const userVal = username.value;
+                    const passVal = password.value;
+                    this.events.emit('user:register:attempt', {username: userVal, password: passVal})
+                })
+                label1.appendChild(username);
+                label2.appendChild(password);
+                form.append(label1, label2, button);
+                this.activeWindow && this.activeWindow.remove();
+                this.activeWindow = form;
+                document.body.appendChild(form);
             }
         })
-        events.on('user:login:success', () => {
-            RemoveHeaderWrapper();
+        this.events.on('user:login:success', (payload) => {
+            RemoveSignupWrapper();
+        
+            appendUserWrapper(this.events, payload);
+            //
             //this.closeAllWindows();
         });
+        this.events.on('open:user', () => {
+            
+        })
     }
 }
 
@@ -188,6 +209,16 @@ class CharacterManager {
         this.events = events;
         this.user = null,
         this.characters = null;
+
+        this.events.on('user:change', (payload) => {
+        const { t, p, v } = payload;
+        if (v === null) return;
+
+        if (p === 'username') {
+            this.loadUser(v);
+        }
+        console.log(payload);
+    })
     }
     async loadUser(user) {
         const response = await fetch ('http://127.0.0.1:3000/getUserInfo', {

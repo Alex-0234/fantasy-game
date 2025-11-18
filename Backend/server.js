@@ -41,24 +41,29 @@ app.post('/getUserInfo', async (req, res) => {
 })
 
 app.post('/tokenDecrypt', async (req, res) => {
+    const token = req.body.token;
+    
+    if (!token) {
+        return res.status(400).json({ error: 'Token is missing from the request body.' });
+    }
+
     try {
-        let token = req.body.token;
         const decoded = jwt.verify(token, secret);
-        let username = null;
-        if(decoded.iat <= decoded.exp) {
-            username = decoded.username;
-            res.status(200).json({ username, token });
-        }
-        else {
-            username = null;
-            token = null;
-            res.status(200).json(username, token, {message: 'User token is expired'});
+        decoded.token = token;
+        res.status(200).json(decoded);
+
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token has expired.', expiredAt: error.expiredAt });
+            
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: `Invalid token: ${error.message}` });
+            
+        } else {
+            return res.status(500).json({ error: 'An internal server error occurred during token verification.' });
         }
     }
-    catch (error) {
-        res.status(500);
-    }
-})
+});
 app.post('/login', async (req, res) => {
     try {
         const { username, password, token } = req.body;

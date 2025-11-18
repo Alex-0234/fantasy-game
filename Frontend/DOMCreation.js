@@ -10,7 +10,7 @@ export function createElement(element, className = null, id = null) {
 
 
 
-export function RemoveHeaderWrapper() {
+export function RemoveSignupWrapper() {
     const wrapper = document.getElementById('header-wrapper');
     wrapper && wrapper.remove();
 }
@@ -18,28 +18,34 @@ export function RemoveHeaderWrapper() {
 
 
 
-export function AppendHeaderWrapper(events, container) {
+export function AppendSignupWrapper(events, container) {
     const wrapper = document.createElement('div');
+    const signin = document.createElement('button');
+    const signup = document.createElement('button');
+    //
     wrapper.classList.add('wrapper');
     wrapper.setAttribute('id','header-wrapper');
-    const signin = document.createElement('button');
+    //
     signin.classList.add('header-button');
     signin.setAttribute('id','signin');
     signin.setAttribute('type','button');
     signin.textContent = 'Signin';
-    const signup = document.createElement('button');
+    //
     signup.classList.add('header-button');
     signup.setAttribute('id','signup');
     signup.setAttribute('type','button');
     signup.textContent = 'Signup';
-
-    const signupWindow = document.getElementById('login-register-form');
+    //
     signup.addEventListener('click', (e) => {
         e.preventDefault();
+        const open = document.querySelector('.user-form');
+        open && open.remove();
         events.emit('UI:open:window', 'register');
     })
     signin.addEventListener('click', (e) => {
         e.preventDefault();
+        const open = document.querySelector('.user-form');
+        open && open.remove();
         events.emit('UI:open:window', 'login');
     })
 
@@ -51,64 +57,122 @@ export function AppendHeaderWrapper(events, container) {
 
 
 
+export function appendUserWrapper(username) {
+    const header = document.getElementById('header');
+    const wrapper = document.createElement('div');
+    const user = document.createElement('div');
+    
+    wrapper.classList.add('wrapper');
+    wrapper.setAttribute('id','header-wrapper');
+
+
+    user.textContent = `${username}`;
+    user.addEventListener('click', () => {
+        
+    })
+
+    wrapper.appendChild(user);
+    header.appendChild(wrapper);
+}
+
+
+
+
 
 export function loginWindow(parent) {
-    const window = document.createElement('form');
+    const loginForm = document.createElement('form');
     const closeIcon = document.createElementNS('http://www.w3.org/2000/svg','svg');
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     const usernameInput = document.createElement('input');
     const passwordInput = document.createElement('input');
     const loginButton = document.createElement('button');
     //
-    window.classList.add('user-form');
+    loginForm.classList.add('user-form');
 
     //
     closeIcon.classList.add('icon');
-
+    closeIcon.addEventListener('click', () => {
+        loginForm.remove();
+    })
     //
     path.textContent = '';
 
     //
+    const label1 = document.createElement('label');
+    label1.setAttribute('for', 'username-input');
     usernameInput.classList.add('user-input');
+    usernameInput.setAttribute('id','username-input');
 
     //
+    const label2 = document.createElement('label');
+    label2.setAttribute('for', 'password-input');
     passwordInput.classList.add('user-input');
+    passwordInput.setAttribute('id','password-input');
 
     //
     loginButton.classList.add('signup-button');
+    loginButton.textContent = 'Login';
 
     //
     
     closeIcon.appendChild(path);
-    window.append(closeIcon, usernameInput, passwordInput, loginButton);
-    parent.appendChild(window);
+    loginForm.append(closeIcon);
+
+    return {
+        form: loginForm,
+        label1 : label1,
+        label2 : label2,
+        username : usernameInput,
+        password : passwordInput,
+        button: loginButton
+    }
 }
 
 
-export function registerWindow(parent) {
-    const window = document.createElement('form');
+export function registerWindow() {
+    const registerForm = document.createElement('form');
     const closeIcon = document.createElementNS('http://www.w3.org/2000/svg','svg');
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
     const usernameInput = document.createElement('input');
     const passwordInput = document.createElement('input');
     const registerButton = document.createElement('button');
     //
-    window.classList.add('user-form');
+    registerForm.classList.add('user-form');
 
     //
     closeIcon.classList.add('icon');
+    closeIcon.addEventListener('click', () => {
+        registerForm.remove();
+    })
 
     //
+    const label1 = document.createElement('label');
+    label1.setAttribute('for', 'username-input')
     usernameInput.classList.add('user-input');
+    usernameInput.setAttribute('id','username-input');
 
     //
+    const label2 = document.createElement('label');
+    label2.setAttribute('for', 'password-input');
     passwordInput.classList.add('user-input');
+    passwordInput.setAttribute('id','password-input');
 
     //
     registerButton.classList.add('signup-button');
+    registerButton.textContent = 'Register';
+
 
     //
     closeIcon.appendChild(path);
-    window.append(closeIcon, usernameInput, passwordInput, registerButton);
-    parent.appendChild(window);
+    
+    registerForm.appendChild(closeIcon);
+
+    return {
+        form: registerForm,
+        label1 : label1,
+        label2 : label2,
+        username : usernameInput,
+        password : passwordInput,
+        button: registerButton
+    }
 }
