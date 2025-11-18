@@ -1,47 +1,21 @@
-import { RemoveHeaderWrapper, AppendHeaderWrapper, createElement } from './DOMCreation.js'
+import { RemoveHeaderWrapper, AppendHeaderWrapper, createElement, loginWindow, registerWindow} from './DOMCreation.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
-    //localStorage.removeItem('token');
+    localStorage.removeItem('token');
     const events = new Emitter();
     const UI = new UIManager(events);
-    const User = new Auth(events);
     const Manager = new CharacterManager(events);
+    const User = new Auth(events);
 
 
-    events.on('user:change', (payload) => {
-        const { t, p, v } = payload;
-        if (v === null) return;
 
-        if (p === 'username') {
-            Manager.loadUser(v);
-        }
-        console.log(payload);
-        
-    })
-    events.on('user:register', (payload) => {
-        
-    })
-    events.on('user:login', (payload) => {
-        const {userId, username, token} = payload;
-        User.data.userId = userId;
-        User.data.username = username;
-        User.data.token = token;
-        localStorage.setItem('token', token);
-        this.events.emit('user:login:success');
-    })
-    events.on('user:logout', () => {
-        User.data.userId = null;
-        User.data.username = null;
-        User.data.token = null;
-        localStorage.removeItem('token');
-        this.events.emit('user:logout:success');
-    })
     
 
     await User.init();
 
 
     //        [   DOM Elements   ]       //
+    
     const registerButton = document.getElementById('register-button');
     const loginButton = document.getElementById('login-button');
     const signupWindow = document.getElementById('login-register-form');
@@ -59,6 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         User.register(usernameValue, passwordValue);
     });
 
+    events.on('user:change', (payload) => {
+        const { t, p, v } = payload;
+        if (v === null) return;
+
+        if (p === 'username') {
+            Manager.loadUser(v);
+        }
+        console.log(payload);
+    })
 })
 
 
@@ -95,6 +78,26 @@ class Auth {
                 return true;
             }
         })
+
+        
+        this.events.on('user:register', (payload) => {
+            
+        })
+        this.events.on('user:login', (payload) => {
+            const {userId, username, token} = payload;
+            User.data.userId = userId;
+            User.data.username = username;
+            User.data.token = token;
+            localStorage.setItem('token', token);
+            events.emit('user:login:success');
+        })
+        this.events.on('user:logout', () => {
+            User.data.userId = null;
+            User.data.username = null;
+            User.data.token = null;
+            localStorage.removeItem('token');
+            events.emit('user:logout:success');
+        })
     }
     async init() {
         if (localStorage.getItem('token') !== null) {
@@ -114,8 +117,8 @@ class Auth {
         }
         else {
             console.log('No Tokens found');
-            const header = document.getElementById('header');
-            AppendHeaderWrapper(header);
+            this.events.emit('UI:render:buttons');
+
         }
     }
     async register(username, password) {
@@ -144,7 +147,6 @@ class Auth {
         this.events.emit('user:login', data);
         console.log('Login response:', data.message);
 
-        RemoveHeaderWrapper();
         document.querySelector('#login-register-form').remove()
         
     }
@@ -160,12 +162,23 @@ class UIManager {
     constructor(events) {
         this.events = events;
 
+        events.on('UI:render:buttons', () => {
+            const header = document.getElementById('header');
+            AppendHeaderWrapper(this.events, header);
+        })
         events.on('UI:open:window', (windowName) => {
-            this.handleWindowOpen(windowName);
+            const header = document.getElementById('header');
+            if ( windowName === 'login' ) {
+                loginWindow(header);
+            }
+            if ( windowName === 'register' ) {
+                registerWindow(header);
+            }
         })
         events.on('user:login:success', () => {
-            this.closeAllWindows();
-        })
+            RemoveHeaderWrapper();
+            //this.closeAllWindows();
+        });
     }
 }
 
@@ -189,7 +202,6 @@ class CharacterManager {
         console.log('Users characters:', this.characters);
     }
 }
-
 
 
 

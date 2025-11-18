@@ -63,14 +63,15 @@ app.post('/login', async (req, res) => {
     try {
         const { username, password, token } = req.body;
         const user = await usersCollection.findOne({ username: username })
+        const userId = user.userId;
         const userPassword = user.password;
         const match = await bcrypt.compare(password, userPassword);
         if (token !== null) {
-            res.status(200).json({username, token, message: 'Already Logged-in'})
+            res.status(200).json({userId, username, token, message: 'Already Logged-in'})
         }
         else if (match && token === null) {
             const token = jwt.sign(user, secret, { expiresIn: '15m' });
-            res.status(200).json({username, token, message: 'Logged-in succesfully'})
+            res.status(200).json({userId, username, token, message: 'Logged-in succesfully'})
         }
         else {
             res.status(401).json({message: "Something isn't matching"});
