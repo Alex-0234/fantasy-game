@@ -44,15 +44,12 @@ app.post('/tokenDecrypt', async (req, res) => {
     try {
         let token = req.body.token;
         const decoded = jwt.verify(token, secret);
-        let username = null;
-        if(decoded.iat <= decoded.exp) {
-            username = decoded.username;
-            res.status(200).json({ username, token });
+        
+        if (decoded.username === undefined && decoded.token === undefined && decoded.userId === undefined) {
+            res.status(200);
         }
-        else {
-            username = null;
-            token = null;
-            res.status(200).json(username, token, {message: 'User token is expired'});
+        if(decoded.iat <= decoded.exp) {
+            res.status(200).json(decoded)
         }
     }
     catch (error) {
