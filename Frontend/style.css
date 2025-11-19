@@ -30,41 +30,14 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: var(--font);
 }
-#heading {
-    margin-left: 1rem;
-    text-align: center;
-    line-height: 8vh;
-    font-size: var(--font-size-large);
-    
-}
-.no-margin {
-    margin: 0;
-}
-.user-form {
-    position: absolute;
-    top: 25%;
-    left: 30%;
-    height: 50%;
-    width: 40%;
-    background: var(--secondary-color);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-
-.hidden {
-    visibility: hidden;
-}
-
-.wrapper {
+.header-wrapper {
     height: 100%;
     width: auto;
     display: flex;
+    justify-content: center;
     align-items: center;
+    gap: 1rem;
 }
 .header-button {
     height: 50%;
@@ -72,8 +45,160 @@ header {
     margin-right: 1rem;
     border: none;
     border-radius: 0.4rem;
+    font-size: var(--font-size-medium);
+    font-weight: 600;
+    font-family: var(--font);
+    transition: 0.15s;
+    cursor: pointer;
 }
-.header-button:hover {
+.header-button:nth-last-child(2n-1) {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 10px 2px var(--primary-color);
+}
+.header-button:nth-last-child(2n-1):hover {
     transform: scale(0.98);
-    background: lightgrey;
+
+}
+.header-button:nth-last-child(2n-2) {
+    background: white;
+    color: black;
+    box-shadow: 0 0 10px 3px black;
+}
+.header-button:nth-last-child(2n-2):hover {
+    transform: scale(0.98);
+}
+
+.user-form {
+    position: absolute;
+    top: 25%;
+    left: 30%;
+    height: 50%;
+    width: 40%;
+    border: 1px solid rgb(102, 102, 102);
+    border-radius: 1rem;
+    background: rgb(58, 58, 58);
+    color: white;
+
+    font-family: var(--font);
+    font-size: var(--font-size-medium);
+    font-weight: 500;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    
+}
+.close-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    cursor: pointer;
+}
+.input-label {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    width: 70%;
+}
+.user-input {
+    height: 2.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.4rem;
+    border: solid 1px white;
+}
+.signup-button {
+    height: 2.5rem;
+    width: 30%;
+    place-self: start;
+    margin-top: 1.5rem;
+    margin-left: 15%;
+    border: solid 1px white;
+    border-radius: 0.4rem;
+
+    font-family: var(--font);
+    font-weight: 600;
+    font-size: var(--font-size-medium);
+
+    cursor: pointer;
+}
+.signup-button:hover {
+    transform: scale(0.98)
+}
+.wrapper {
+    height: 100%;
+    width: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.user-button {
+    height: 50%;
+    width: 30%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: solid 1px rgb(75, 75, 75);
+    border-radius: 0.4rem;
+
+    background: rgb(102, 102, 102);
+    color: white;
+    font-family: var(--font);
+    font-weight: 500;
+    font-size: var(--font-size-medium);
+    text-align: center;
+
+    cursor: pointer;
+
+    transition: 0.15s ease-in;
+}
+.user-button:hover {
+    color: var(--primary-color);
+}
+.user-window {
+    position: absolute;
+    top: 4rem;
+    right: 3rem;
+    height: 20%;
+    width: 10%;
+    padding-top: 1rem;
+    border-radius: 0.4rem;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: top;
+    align-items: center;
+
+    background: rgb(102, 102, 102);
+}
+.user-window:nth-last-child(2n-1) {
+    top: 0.2rem;
+    right: 0.2rem;
+}
+.user-window-button {
+    height: 2rem;
+    width: 60%;
+    margin: 0.5rem;
+
+    border-radius: 0.4rem;
+
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+ /*   Utility classes   */
+
+.no-margin {
+    margin: 0;
+}
+.hidden {
+    visibility: hidden;
 }

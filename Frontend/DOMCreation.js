@@ -130,6 +130,7 @@ export function loginWindow(events) {
     })
     const passwordInput = createElement('input','user-input','',{
         id: 'password-input',
+        type: 'password',
         required: true
     });
     const loginButton = createElement('button','signup-button', 'Log-in');
@@ -172,13 +173,16 @@ export function registerWindow(events) {
         for: 'username-input'
     })
     const usernameInput = createElement('input','user-input','',{
-        id: 'username-input'
+        id: 'username-input',
+        required: true
     });
     const passwordLabel = createElement('label', 'input-label', 'Password: ', {
         for: 'password-input'
     })
     const passwordInput = createElement('input','user-input','',{
-        id: 'password-input'
+        id: 'password-input',
+        type: 'password',
+        required: true
     });
     const registerButton = createElement('button','signup-button', 'Register');
 
