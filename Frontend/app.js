@@ -1,56 +1,15 @@
-import { RemoveHeaderWrapper, AppendHeaderWrapper, createElement } from './DOMCreation.js'
-
-
+import { RemoveSignupWrapper, AppendSignupWrapper, appendUserWrapper, AppendUserWindow, loginWindow, registerWindow, createElement} from './DOMCreation.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
+    //localStorage.removeItem('token');
     const events = new Emitter();
-    const User = new Auth(events);
+    const UI = new UIManager(events);
     const Manager = new CharacterManager(events);
+    const User = new Auth(events);
 
-    events.on('user:change', (payload) => {
-        const { t, p, v } = payload;
-        if (p === 'username') {
-            Manager.loadUser(v);
-        }
-        console.log(payload);
-        
-    })
-
-    
-
-    //User.data.username = 'Alex';
-    
-   
-
-
+    await User.init();
 
     //        [   DOM Elements   ]       //
-    const registerButton = document.getElementById('register-button');
-    const loginButton = document.getElementById('login-button');
-    const signupWindow = document.getElementById('login-register-form');
-    //const classSelect = document.getElementById('class-select');
-
-
-    //        [ Event Listeners ]       //
-
-   /*  classSelect.addEventListener('wheel', (e) => {
-        e.preventDefault(); // stop page from vertical scroll
-        classSelect.scrollLeft += e.deltaY * 10; // use vertical wheel delta to move sideways
-    }); */
-
-    loginButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const usernameValue = document.getElementById('username').value;
-        const passwordValue = document.getElementById('password').value;
-        watchedUser.login(usernameValue, passwordValue);
-    })
-    registerButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const usernameValue = document.getElementById('username').value;
-        const passwordValue = document.getElementById('password').value;
-        watchedUser.register(usernameValue, passwordValue);
-    });
-
 })
 
 
@@ -66,12 +25,15 @@ class Emitter {
         }
         this.listeners[event].push(callback);
     }
-    emit(event, ...args) {
-        this.listeners[event].forEach(cb => {
-            cb(...args);
-        });
+    emit(event, payload) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(cb => {
+                cb(payload);
+            })
+        } 
     }
 }
+
 class Auth {
     constructor(events) {
         this.events = events;
@@ -83,28 +45,58 @@ class Auth {
                 return true;
             }
         })
+
+        this.events.on('user:register:attempt', (payload) => {
+            const { username, password } = payload;
+            this.register(username, password);
+        })
+        this.events.on('user:login:attempt', (payload) => {
+            const { username, password } = payload;
+            this.login(username, password);
+        })
+        
+        this.events.on('user:login', (payload) => {
+            const {userId, username, token} = payload;
+            this.data.userId = userId;
+            this.data.username = username;
+            this.data.token = token;
+            localStorage.setItem('token', token);
+            events.emit('user:login:success', this.data.username);
+        })
+        this.events.on('user:logout', () => {
+            this.data.userId = null;
+            this.data.username = null;
+            this.data.token = null;
+            localStorage.removeItem('token');
+            events.emit('user:logout:success');
+        })
     }
     async init() {
-        if (localStorage.getItem('token') !== null) {
-            const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token');
+        if (token === null) {
+            console.log('No Tokens found');
+            this.events.emit('UI:render:buttons'); 
+            return;
+        }
+        try {
             const response = await fetch ('http://127.0.0.1:3000/tokenDecrypt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token })
             });
-            const data = await response.json();
-            this.user = data.username;
-            //console.log(data.username)
-            this.token = data.token;
-            //console.log(data.token)
-            localStorage.setItem('token', token);
-            
+            if(response.ok) {
+                const data = await response.json(); 
+                this.events.emit('user:login', data);
+            }
+            else {
+                const data = await response.json(); 
+                console.log(data.error);
+                this.events.emit('user:logout');
+            }
         }
-        else {
-            console.log('No Tokens found');
-            const header = document.getElementById('header');
-            AppendHeaderWrapper(header);
-        }
+        catch (error) {
+
+        }  
     }
     async register(username, password) {
          const response = await fetch('http://127.0.0.1:3000/register', {
@@ -112,9 +104,13 @@ class Auth {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-        const data = await response.json();
-        if (data.create) {
+        
+        if (response.ok && data.create) {
+            const data = await response.json();
             this.login(username, password);
+        }
+        else {
+            this.events.emit('user:register:failed');
         }
         console.log('Registration response:', data.message);
         
@@ -127,22 +123,17 @@ class Auth {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password, token })
          });
-        const data = await response.json();
-        console.log('Login response:', data.message);
-        this.user = data.username;
-        this.token = data.token;
-        //console.log('USER:',this.user);
-        localStorage.setItem('token', data.token);
-
-        RemoveHeaderWrapper();
-        document.querySelector('#login-register-form').remove()
-        
+        if(response.ok) {
+            const data = await response.json();
+            this.events.emit('user:login', data);
+            console.log('Login response:', data.message);
+        }
+        else {
+            this.events.emit('user:login:failed');
+        }
     }
     logout() {
-        this.user = null;
-        this.token = null;
-        localStorage.removeItem('token');
-        console.log('User logged-out')
+        this.events.emit('user:logout');
     }
     print() {
         console.log(this.user);
@@ -150,12 +141,69 @@ class Auth {
 }
 
 
+class UIManager {
+    constructor(events) {
+        this.events = events;
+        this.activeWindow = null;
+
+        this.setupEvents();
+    }
+    setupEvents() {
+        this.events.on('UI:render:buttons', () => {
+            const header = document.getElementById('header');
+            AppendSignupWrapper(this.events, header);
+        })
+        this.events.on('UI:render:window', (windowName) => {
+
+            if ( windowName === 'login' ) {
+                const loginForm = loginWindow(this.events);
+                this.activeWindow && this.activeWindow.remove();
+                this.activeWindow = loginForm;
+            }
+            if ( windowName === 'register' ) {
+                const registerForm = registerWindow(this.events);
+                this.activeWindow && this.activeWindow.remove();
+                this.activeWindow = registerForm;
+            }
+        })
+        this.events.on('user:register:failed', () => {
+            //  Notify user
+        })
+        this.events.on('user:login:failed', () => {
+            //  Notify user
+        })
+        this.events.on('user:login:success', (payload) => {
+            RemoveSignupWrapper();
+            this.activeWindow.remove();
+            appendUserWrapper(this.events, payload);
+        });
+        this.events.on('user:logout:success', () => {
+            this.events.emit('UI:render:buttons');
+            // Notify user ig
+        })
+        this.events.on('UI:render:user-window', () => {
+            this.activeWindow.remove();
+            AppendUserWindow();
+        })
+    }
+}
+
 
 class CharacterManager {
     constructor(events) {
         this.events = events;
         this.user = null,
         this.characters = null;
+
+        this.events.on('user:change', (payload) => {
+        const { t, p, v } = payload;
+        if (v === null) return;
+
+        if (p === 'username') {
+            this.loadUser(v);
+        }
+        console.log(payload);
+    })
     }
     async loadUser(user) {
         const response = await fetch ('http://127.0.0.1:3000/getUserInfo', {
@@ -170,7 +218,6 @@ class CharacterManager {
         console.log('Users characters:', this.characters);
     }
 }
-
 
 
 

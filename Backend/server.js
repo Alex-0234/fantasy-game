@@ -41,33 +41,42 @@ app.post('/getUserInfo', async (req, res) => {
 })
 
 app.post('/tokenDecrypt', async (req, res) => {
+    const token = req.body.token;
+    
+    if (!token) {
+        return res.status(400).json({ error: 'Token is missing from the request body.' });
+    }
+
     try {
-        let token = req.body.token;
         const decoded = jwt.verify(token, secret);
-        
-        if (decoded.username === undefined && decoded.token === undefined && decoded.userId === undefined) {
-            res.status(200);
-        }
-        if(decoded.iat <= decoded.exp) {
-            res.status(200).json(decoded)
+        decoded.token = token;
+        res.status(200).json(decoded);
+
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token has expired.', expiredAt: error.expiredAt });
+            
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: `Invalid token: ${error.message}` });
+            
+        } else {
+            return res.status(500).json({ error: 'An internal server error occurred during token verification.' });
         }
     }
-    catch (error) {
-        res.status(500);
-    }
-})
+});
 app.post('/login', async (req, res) => {
     try {
         const { username, password, token } = req.body;
         const user = await usersCollection.findOne({ username: username })
+        const userId = user.userId;
         const userPassword = user.password;
         const match = await bcrypt.compare(password, userPassword);
         if (token !== null) {
-            res.status(200).json({username, token, message: 'Already Logged-in'})
+            res.status(200).json({userId, username, token, message: 'Already Logged-in'})
         }
         else if (match && token === null) {
             const token = jwt.sign(user, secret, { expiresIn: '15m' });
-            res.status(200).json({username, token, message: 'Logged-in succesfully'})
+            res.status(200).json({userId, username, token, message: 'Logged-in succesfully'})
         }
         else {
             res.status(401).json({message: "Something isn't matching"});
@@ -94,6 +103,7 @@ app.post('/register', async (req, res) => {
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        
         if (!available) {
             res.status(400).json({ message: 'Username is already taken' })
         }

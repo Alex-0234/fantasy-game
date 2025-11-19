@@ -77,29 +77,3 @@ header {
     transform: scale(0.98);
     background: lightgrey;
 }
-#character-select {
-    height: 50%;
-    width: 80%;
-    background: var(--primary-color);
-    border-radius: 1rem;
-    overflow: hidden;
-}
-#class-select {
-    display: flex;
-    scroll-behavior: smooth;
-    height: 100%;
-    width: calc(30% * 6);
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex-wrap: nowrap;
-    gap: 1rem;
-    background: rgba(0, 0, 0, 0.4);
-}
-.classes {
-    flex: 0 0 auto;
-    height: 90%;
-    width: 15rem;
-    margin: 2rem;
-    background: rgba(0,0,0,0.2);
-}
-
