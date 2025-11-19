@@ -69,10 +69,10 @@ export function AppendSignupWrapper(events, container) {
 
 export function AppendUserWindow(){
     const window = createElement('div','user-window','');
-    const closeIcon = createElementNS('svg','close-icon', {
+    const closeIcon = createElementNS('svg','close-icon-user', {
         height: '20px',
         width: '20px',
-        viewbox: '0 0 24 24',
+        viewbox: '0 0 10 10',
         fill:'none'
     });
     const path = createElementNS('path', 'close-icon-path',{
@@ -82,24 +82,31 @@ export function AppendUserWindow(){
     const profileButton = createElement('button', 'user-window-button', 'Profile');
     const settingsButton = createElement('button', 'user-window-button', 'Settings');
 
+    closeIcon.addEventListener('click', () => {
+        window.remove();
+    })
+
     window.append(closeIcon, path, profileButton, settingsButton);
     document.body.appendChild(window);
+
+    return window;
 }
 
 
 
 
-export function appendUserWrapper(events, username) {
-    const header = document.getElementById('header');
+export function appendUserWrapper(events, username, container) {
     const wrapper = createElement('div','wrapper','');
-    const user = createElement('div','user-button', username);
+    const user = createElement('div','user-button', `${username}`);
 
     user.addEventListener('click', () => {
         events.emit('UI:render:user-window');
     })
 
     wrapper.appendChild(user);
-    header.appendChild(wrapper);
+    container.appendChild(wrapper);
+
+    return wrapper;
 }
 
 
@@ -111,7 +118,7 @@ export function loginWindow(events) {
     const closeIcon = createElementNS('svg','close-icon', {
         height: '20px',
         width: '20px',
-        viewbox: '0 0 24 24',
+        viewbox: '0 0 10 10',
         fill:'none'
     });
     const path = createElementNS('path', 'close-icon-path',{
@@ -162,7 +169,7 @@ export function registerWindow(events) {
     const closeIcon = createElementNS('svg','close-icon', {
         height: '20px',
         width: '20px',
-        viewbox: '0 0 24 24',
+        viewbox: '0 0 10 10',
         fill:'none'
     });
     const path = createElementNS('path', 'close-icon-path',{

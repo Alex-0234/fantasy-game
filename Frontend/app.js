@@ -150,7 +150,7 @@ class UIManager {
     }
     setupEvents() {
         this.events.on('UI:render:buttons', () => {
-            const header = document.getElementById('header');
+            const header = document.querySelector('header');
             AppendSignupWrapper(this.events, header);
         })
         this.events.on('UI:render:window', (windowName) => {
@@ -172,18 +172,24 @@ class UIManager {
         this.events.on('user:login:failed', () => {
             //  Notify user
         })
-        this.events.on('user:login:success', (payload) => {
+        this.events.on('user:login:success', async (payload) => {
+            const header = document.querySelector('header');
             RemoveSignupWrapper();
-            this.activeWindow.remove();
-            appendUserWrapper(this.events, payload);
+            this.activeWindow && this.activeWindow.remove();
+            const window = await appendUserWrapper(this.events, payload, header);
+            this.activeWindow = window;
         });
         this.events.on('user:logout:success', () => {
             this.events.emit('UI:render:buttons');
             // Notify user ig
         })
         this.events.on('UI:render:user-window', () => {
-            this.activeWindow.remove();
-            AppendUserWindow();
+            this.userWindow && this.activeWindow.remove();
+            if (!document.querySelector('.user-window')) {
+                const window = AppendUserWindow();
+                this.activeWindow = window;
+            }
+            
         })
     }
 }
