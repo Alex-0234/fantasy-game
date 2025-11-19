@@ -15,11 +15,14 @@ export function createElement(el, className, text = '', attributes = {}) {
 
     return element;
 }
-export function createElementNS(el, className, d = '') {
+export function createElementNS(el, className, attributes = {}) {
     const element = document.createElementNS('http://www.w3.org/2000/svg', el);
     element.classList.add(className);
-    if(!d === '') {
-        element.setAttribute('d', d);
+
+    for (const key in attributes) {
+        if (Object.hasOwnProperty.call(attributes, key)) {
+            element.setAttribute(key, attributes[key]);
+        }
     }
     return element;
 }
@@ -66,8 +69,16 @@ export function AppendSignupWrapper(events, container) {
 
 export function AppendUserWindow(){
     const window = createElement('div','user-window','');
-    const closeIcon = createElementNS('svg','close-icon');
-    const path = createElementNS('path', 'close-icon-path','');
+    const closeIcon = createElementNS('svg','close-icon', {
+        height: '20px',
+        width: '20px',
+        viewbox: '0 0 24 24',
+        fill:'none'
+    });
+    const path = createElementNS('path', 'close-icon-path',{
+        d: 'M18 6L6 18M6 6L18 18',
+        stroke: 'white'
+    });
     const profileButton = createElement('button', 'user-window-button', 'Profile');
     const settingsButton = createElement('button', 'user-window-button', 'Settings');
 
@@ -97,8 +108,16 @@ export function appendUserWrapper(events, username) {
 
 export function loginWindow(events) {
     const loginForm = createElement('form','user-form');
-    const closeIcon = createElementNS('svg','close-icon');
-    const path = createElementNS('path', 'close-icon-path');
+    const closeIcon = createElementNS('svg','close-icon', {
+        height: '20px',
+        width: '20px',
+        viewbox: '0 0 24 24',
+        fill:'none'
+    });
+    const path = createElementNS('path', 'close-icon-path',{
+        d: 'M18 6L6 18M6 6L18 18',
+        stroke: 'white'
+    });
     const usernameLabel = createElement('label', 'input-label', 'Username: ', {
         for: 'username-input'
     })
@@ -139,8 +158,16 @@ export function loginWindow(events) {
 
 export function registerWindow(events) {
     const registerForm = createElement('form','user-form');
-    const closeIcon = createElementNS('svg','close-icon');
-    const path = createElementNS('path', 'close-icon-path');
+    const closeIcon = createElementNS('svg','close-icon', {
+        height: '20px',
+        width: '20px',
+        viewbox: '0 0 24 24',
+        fill:'none'
+    });
+    const path = createElementNS('path', 'close-icon-path',{
+        d: 'M18 6L6 18M6 6L18 18',
+        stroke: 'white'
+    });
     const usernameLabel = createElement('label', 'input-label', 'Username: ', {
         for: 'username-input'
     })

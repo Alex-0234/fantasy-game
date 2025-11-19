@@ -1,7 +1,7 @@
 import { RemoveSignupWrapper, AppendSignupWrapper, appendUserWrapper, AppendUserWindow, loginWindow, registerWindow, createElement} from './DOMCreation.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
-    localStorage.removeItem('token');
+    //localStorage.removeItem('token');
     const events = new Emitter();
     const UI = new UIManager(events);
     const Manager = new CharacterManager(events);
@@ -9,13 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await User.init();
 
-
     //        [   DOM Elements   ]       //
-    
-
-
-
-
 })
 
 
@@ -39,7 +33,6 @@ class Emitter {
         } 
     }
 }
-
 
 class Auth {
     constructor(events) {
@@ -111,9 +104,13 @@ class Auth {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-        const data = await response.json();
-        if (data.create) {
+        
+        if (response.ok && data.create) {
+            const data = await response.json();
             this.login(username, password);
+        }
+        else {
+            this.events.emit('user:register:failed');
         }
         console.log('Registration response:', data.message);
         
@@ -134,18 +131,16 @@ class Auth {
         else {
             this.events.emit('user:login:failed');
         }
-        
-
-        
     }
     logout() {
         this.events.emit('user:logout');
-        console.log('User logged-out')
     }
     print() {
         console.log(this.user);
     }
 }
+
+
 class UIManager {
     constructor(events) {
         this.events = events;
@@ -171,16 +166,21 @@ class UIManager {
                 this.activeWindow = registerForm;
             }
         })
+        this.events.on('user:register:failed', () => {
+            //  Notify user
+        })
         this.events.on('user:login:failed', () => {
-            //Notify user
+            //  Notify user
         })
         this.events.on('user:login:success', (payload) => {
             RemoveSignupWrapper();
             this.activeWindow.remove();
             appendUserWrapper(this.events, payload);
-            //
-            //this.closeAllWindows();
         });
+        this.events.on('user:logout:success', () => {
+            this.events.emit('UI:render:buttons');
+            // Notify user ig
+        })
         this.events.on('UI:render:user-window', () => {
             this.activeWindow.remove();
             AppendUserWindow();
