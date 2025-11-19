@@ -103,6 +103,7 @@ app.post('/register', async (req, res) => {
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        
         if (!available) {
             res.status(400).json({ message: 'Username is already taken' })
         }

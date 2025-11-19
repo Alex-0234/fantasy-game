@@ -1,16 +1,13 @@
-import { RemoveSignupWrapper, AppendSignupWrapper, appendUserWrapper, loginWindow, registerWindow} from './DOMCreation.js'
+import { RemoveSignupWrapper, AppendSignupWrapper, appendUserWrapper, AppendUserWindow, loginWindow, registerWindow, createElement} from './DOMCreation.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
-    //localStorage.removeItem('token');
+    localStorage.removeItem('token');
     const events = new Emitter();
     const UI = new UIManager(events);
     const Manager = new CharacterManager(events);
     const User = new Auth(events);
 
     await User.init();
-
-    
-
 
 
     //        [   DOM Elements   ]       //
@@ -65,9 +62,6 @@ class Auth {
             this.login(username, password);
         })
         
-        this.events.on('user:register', (payload) => {
-            
-        })
         this.events.on('user:login', (payload) => {
             const {userId, username, token} = payload;
             this.data.userId = userId;
@@ -102,7 +96,9 @@ class Auth {
                 this.events.emit('user:login', data);
             }
             else {
-                localStorage.removeItem('token')
+                const data = await response.json(); 
+                console.log(data.error);
+                this.events.emit('user:logout');
             }
         }
         catch (error) {
@@ -130,10 +126,17 @@ class Auth {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password, token })
          });
-        const data = await response.json();
+        if(response.ok) {
+            const data = await response.json();
+            this.events.emit('user:login', data);
+            console.log('Login response:', data.message);
+        }
+        else {
+            this.events.emit('user:login:failed');
+        }
+        
 
-        this.events.emit('user:login', data);
-        console.log('Login response:', data.message);
+        
     }
     logout() {
         this.events.emit('user:logout');
@@ -155,50 +158,32 @@ class UIManager {
             const header = document.getElementById('header');
             AppendSignupWrapper(this.events, header);
         })
-        this.events.on('UI:open:window', (windowName) => {
-            const header = document.getElementById('header');
-            if ( windowName === 'login' ) {
-                const {form, label1, label2, username, password, button} = loginWindow();
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
+        this.events.on('UI:render:window', (windowName) => {
 
-                    const userVal = username.value;
-                    const passVal = password.value;
-                    this.events.emit('user:login:attempt', {username: userVal, password: passVal})
-                })
-                label1.appendChild(username);
-                label2.appendChild(password);
-                form.append(label1, label2, button);
+            if ( windowName === 'login' ) {
+                const loginForm = loginWindow(this.events);
                 this.activeWindow && this.activeWindow.remove();
-                this.activeWindow = form;
-                document.body.appendChild(form);
+                this.activeWindow = loginForm;
             }
             if ( windowName === 'register' ) {
-                const {form, label1, label2, username, password, button} = registerWindow();
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-
-                    const userVal = username.value;
-                    const passVal = password.value;
-                    this.events.emit('user:register:attempt', {username: userVal, password: passVal})
-                })
-                label1.appendChild(username);
-                label2.appendChild(password);
-                form.append(label1, label2, button);
+                const registerForm = registerWindow(this.events);
                 this.activeWindow && this.activeWindow.remove();
-                this.activeWindow = form;
-                document.body.appendChild(form);
+                this.activeWindow = registerForm;
             }
+        })
+        this.events.on('user:login:failed', () => {
+            //Notify user
         })
         this.events.on('user:login:success', (payload) => {
             RemoveSignupWrapper();
-        
+            this.activeWindow.remove();
             appendUserWrapper(this.events, payload);
             //
             //this.closeAllWindows();
         });
-        this.events.on('open:user', () => {
-            
+        this.events.on('UI:render:user-window', () => {
+            this.activeWindow.remove();
+            AppendUserWindow();
         })
     }
 }
